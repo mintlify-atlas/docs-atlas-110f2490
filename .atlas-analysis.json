@@ -1,0 +1,80 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Filament Drawable Map",
+  "projectDescription": "A FilamentPHP plugin that provides interactive Google Maps form fields for drawing and viewing polygon zones within Filament admin panels.",
+  "theme": "palm",
+  "primaryColor": "#4285F4",
+  "lightColor": "#E8F0FE",
+  "darkColor": "#1A3461",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/drawable-map",
+              "components/viewable-map"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/google-maps",
+              "configuration/options"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/data-storage",
+              "advanced/dark-mode",
+              "advanced/localization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "DrawableMap field for interactively drawing polygon zones on Google Maps",
+    "ViewableMap field for displaying read-only polygons with hover tooltips",
+    "Ctrl+Click interaction to add polygon vertices",
+    "Double-click vertex to remove points",
+    "Clear zone button control on the map",
+    "Light and dark map mode support with automatic theme detection",
+    "JSON-based polygon coordinate storage",
+    "Multiple polygon display with per-polygon color customization",
+    "Configurable map center location and zoom level",
+    "Full FilamentPHP v3 integration with Livewire state sync"
+  ],
+  "publicApiSurface": [
+    "DrawableMap::make(string $name)",
+    "DrawableMap::location(array $location)",
+    "DrawableMap::zoom(int $zoom)",
+    "DrawableMap::color(string|Closure|null $color)",
+    "DrawableMap::setMode(string $value)",
+    "DrawableMap::clearButtonLabel(string $label)",
+    "ViewableMap::make(string $name)",
+    "ViewableMap::polygons(array|Closure|null $polygons)",
+    "ViewableMap::titles(array|Closure|null $titles)",
+    "ViewableMap::color(string|Closure|null $color)",
+    "ViewableMap::mode(string $value)",
+    "InteractsWithMap::getLocation()",
+    "InteractsWithMap::getZoom()",
+    "InteractsWithMap::getClearButtonLabel()",
+    "Config: filament-drawable-map.providers.google.key",
+    "Config: filament-drawable-map.location.latitude",
+    "Config: filament-drawable-map.location.longitude",
+    "Env: GOOGLE_MAPS_API_KEY"
+  ]
+}

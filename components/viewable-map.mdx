@@ -1,0 +1,135 @@
+---
+title: "ViewableMap: Display Read-Only Polygons on Google Maps"
+sidebarTitle: "ViewableMap"
+description: "The ViewableMap field renders one or more read-only polygon zones on Google Maps, with per-polygon colors, hover tooltips, and click-to-zoom behavior."
+---
+
+The `ViewableMap` field renders a non-editable Google Maps canvas that displays one or more pre-existing polygon zones. It is designed for detail pages, infolist panels, or any form context where users need to inspect geographic areas without being able to modify them. Polygons support individual colours, hover tooltips, and click-to-zoom behaviour out of the box.
+
+## Basic Usage
+
+Display a single polygon stored in a model attribute:
+
+```php
+use DiegoBas\FilamentDrawableMap\Forms\Components\ViewableMap;
+
+ViewableMap::make('zone')
+    ->label('Delivery Zone')
+    ->color('#4285F4'),
+```
+
+The field reads its value directly from the model attribute named `zone`. The value must be a JSON string or a PHP array of `lat`/`lng` coordinate objects — the same format produced by `DrawableMap`.
+
+## Displaying Multiple Polygons
+
+Use `polygons()` to supply an explicit array of polygon coordinate sets and `titles()` to attach a hover tooltip to each one.
+
+```php
+ViewableMap::make('zones_display')
+    ->label('All Zones')
+    ->polygons(fn ($record) => [
+        json_decode($record->zone_a, true),
+        json_decode($record->zone_b, true),
+    ])
+    ->titles(['Zone A', 'Zone B'])
+    ->color('#4285F4'),
+```
+
+The map auto-fits its viewport to show all supplied polygons on first render. Each polygon is drawn using the colour resolved from `color()`. Per-polygon colour overrides are applied through the Alpine `colors` state array, which is populated from the data returned by `polygons()` at the time the component initialises.
+
+## Method Reference
+
+<ParamField path="make" type="string" required>
+  The field name. In single-polygon mode this must match the model attribute that holds the coordinate JSON. In multi-polygon mode (when `polygons()` is provided) the name is still required by Filament's field system but the field's own state value is ignored.
+</ParamField>
+
+<ParamField path="polygons" type="array | Closure | null">
+  An explicit array of polygon coordinate sets to display. Each element is itself an array of coordinate objects in the form `[['lat' => ..., 'lng' => ...], ...]`. Accepts a `Closure` that receives the current `$record`.
+
+  When `polygons()` is not called, the component falls back to reading its own Livewire-entangled state value (the single model attribute).
+
+  ```php
+  ->polygons(fn ($record) => [
+      json_decode($record->zone_a, true),
+      json_decode($record->zone_b, true),
+  ])
+  ```
+</ParamField>
+
+<ParamField path="titles" type="array | Closure | null">
+  An array of tooltip strings, one per polygon, shown as a floating popup bubble when the user hovers over that polygon. The order must match the order of entries in `polygons()`.
+
+  ```php
+  ->titles(['Northern Zone', 'Southern Zone'])
+  ```
+</ParamField>
+
+<ParamField path="color" type="string | Closure | null">
+  A hex colour string applied to the polygon stroke and semi-transparent fill. In multi-polygon mode this serves as the fallback colour for any polygon whose index has no entry in the resolved `colors` array.
+
+  Default: `'#FF0000'`.
+
+  ```php
+  ->color('#34A853')
+  ```
+</ParamField>
+
+<ParamField path="mode" type="string">
+  Overrides the map colour scheme. Accepted values are `'light'` and `'dark'`. When not set, the component checks `localStorage.theme` and the browser's `prefers-color-scheme` media query, so it tracks the active Filament theme automatically without any configuration.
+
+  ```php
+  ->mode('dark')
+  ```
+</ParamField>
+
+<ParamField path="disabled" type="bool | Closure">
+  When `true`, gesture handling is set to `'none'` and map icon clicks are disabled at the Google Maps SDK level. The polygons remain visible but the map cannot be panned or zoomed by the user.
+</ParamField>
+
+## Interaction
+
+`ViewableMap` is read-only but still provides several passive interactions to help users navigate between zones.
+
+<CardGroup cols={2}>
+  <Card title="Hover tooltip" icon="message-circle">
+    Move the pointer over any polygon to show a floating bubble containing its title. The bubble disappears when the pointer leaves the polygon.
+  </Card>
+  <Card title="Click to zoom" icon="zoom-in">
+    Click a polygon to fit and pan the map to that polygon's bounding box.
+  </Card>
+  <Card title="Auto-fit on load" icon="maximize">
+    On initialisation the map automatically calculates a global bounding box across all polygons and fits the viewport to show all of them at once.
+  </Card>
+  <Card title="Dark mode sync" icon="moon">
+    The component listens for the `dark-mode-toggled` window event dispatched by Filament and switches between the light and dark Google Maps colour scheme without a page reload.
+  </Card>
+</CardGroup>
+
+## State Format
+
+In single-polygon mode the field reads its value from the model attribute. The stored value must be a JSON string or PHP array of coordinate objects:
+
+```json
+[
+  {"lat": 40.4168, "lng": -3.7038},
+  {"lat": 40.4200, "lng": -3.7000}
+]
+```
+
+The component handles JSON decoding automatically during state hydration, so a `json` database column is all that is needed:
+
+```php
+$table->json('zone')->nullable();
+```
+
+And in your model:
+
+```php
+protected $casts = [
+    'zone' => 'array',
+];
+```
+
+<Info>
+  When `polygons()` is provided, the field's own state value (the model attribute bound to `make()`) is completely ignored. All coordinate data is taken exclusively from the array returned by your `polygons()` closure. You can therefore pass any field name to `make()` — it only serves as a unique identifier within the Filament form schema.
+</Info>

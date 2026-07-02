@@ -1,0 +1,82 @@
+---
+title: "Configure the Google Maps API Key for Filament Drawable Map"
+sidebarTitle: "Google Maps Setup"
+description: "Obtain a Google Maps JavaScript API key, enable the required APIs, and configure it in your Laravel environment for Filament Drawable Map."
+---
+
+Filament Drawable Map uses the Google Maps JavaScript API to render interactive map fields in your Filament forms. Before any map field will render, you need a valid API key with the correct APIs enabled and the key available in your Laravel environment.
+
+<Steps>
+
+  <Step title="Obtain a Google Maps API key">
+    Open the [Google Cloud Console](https://console.cloud.google.com/), create or select a project, then navigate to **APIs & Services → Credentials**. Click **Create Credentials → API key** to generate a new key.
+  </Step>
+
+  <Step title="Enable the required APIs">
+    In the same Google Cloud project, go to **APIs & Services → Library** and enable both:
+
+    - **Maps JavaScript API** — powers the interactive map canvas rendered inside Filament forms.
+    - **Places API** — provides address autocomplete and geocoding support used by the drawing component.
+
+    The map fields will not initialise correctly if either API is disabled.
+  </Step>
+
+  <Step title="Add the key to your .env file">
+    Open your project's `.env` file and add the following line, replacing the placeholder with your actual key:
+
+    ```env
+    GOOGLE_MAPS_API_KEY=AIzaSyYour_Key_Here
+    ```
+  </Step>
+
+  <Step title="The key is read automatically — no additional code is needed">
+    Filament Drawable Map reads `GOOGLE_MAPS_API_KEY` directly from your environment. As long as the variable is present in `.env` and your application cache is cleared, both `DrawableMap` and `ViewableMap` fields will pick it up without any extra configuration.
+
+    ```bash
+    php artisan config:clear
+    ```
+  </Step>
+
+</Steps>
+
+## How the key is loaded
+
+The package service provider calls `FilamentAsset::registerScriptData()` during the `packageBooted` phase. This injects the API key into Filament's shared JavaScript data bag, making it available to the Alpine.js map component as `window.filamentData.api.key` at runtime.
+
+```php
+FilamentAsset::registerScriptData([
+    'api' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+    'location' => [
+        'latitude'  => config('filament-map-plugin.location.latitude'),
+        'longitude' => config('filament-map-plugin.location.longitude'),
+    ],
+]);
+```
+
+The `ViewableMap` Blade template also references the key directly via `config('filament-drawable-map.providers.google.key')` when constructing the Google Maps script URL, so the key must be present in the published config or the environment variable must resolve correctly through the config file.
+
+<Tip>
+  For production deployments, restrict your API key to the specific HTTP referrers (your domain names) in **Google Cloud Console → APIs & Services → Credentials**. This prevents unauthorised use of your key by third parties.
+</Tip>
+
+## Troubleshooting
+
+<Accordion title="Map is not loading">
+  Check that `GOOGLE_MAPS_API_KEY` is present and non-empty in your `.env` file, then run `php artisan config:clear` to flush any cached config values. Also confirm that the **Maps JavaScript API** is enabled for your Google Cloud project — navigate to **APIs & Services → Enabled APIs** and look for it in the list.
+</Accordion>
+
+<Accordion title="API key not authorized">
+  If Google returns an `ApiNotActivatedMapError` or a `RefererNotAllowedMapError`, your key's HTTP referrer restrictions are blocking the request. Open **Google Cloud Console → APIs & Services → Credentials**, select your key, and either add your domain to the allowed referrers list or temporarily set the restriction to **None** for local debugging.
+</Accordion>
+
+<Accordion title="Map shows but polygons don't save">
+  Ensure the database column that stores the polygon data is cast as a `json` type and **not** a plain `string`. The field serialises polygon coordinates as a JSON array of `{lat, lng}` objects. If the column is a plain string cast in your Eloquent model, the JSON will be double-encoded and the map component will fail to parse it on the next load. Use a `json` cast in your model:
+
+  ```php
+  protected $casts = [
+      'zone' => 'json',
+  ];
+  ```
+</Accordion>

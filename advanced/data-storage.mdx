@@ -1,0 +1,96 @@
+---
+title: "How Filament Drawable Map Stores Polygon Coordinates"
+sidebarTitle: "Data Storage"
+description: "Understand the JSON coordinate format used by DrawableMap, how to set up your database column, and how to work with the stored polygon data in your Laravel models."
+---
+
+`DrawableMap` represents polygon zones as a flat array of latitude/longitude pairs. Understanding how coordinates flow between the map component, your Eloquent model, and the database will help you set up migrations correctly, avoid double-encoding bugs, and query or transform zone data with confidence.
+
+## Coordinate Format
+
+Every polygon is stored as a JSON array of objects, each containing a `lat` key and a `lng` key. The array is ordered — vertices are connected in sequence, and the polygon is automatically closed by Google Maps.
+
+```json
+[
+  { "lat": 40.4168, "lng": -3.7038 },
+  { "lat": 40.4200, "lng": -3.7000 },
+  { "lat": 40.4100, "lng": -3.6950 }
+]
+```
+
+The number of vertices is unlimited. A minimum of three points is required to form a valid polygon on the map.
+
+## Database Migration
+
+The column that stores the polygon must be a `json` type. A `nullable` constraint is recommended because a field can be saved before any zone has been drawn.
+
+```php
+// In a migration
+$table->json('zone')->nullable();
+```
+
+Add this column to whichever migration creates or modifies the table for your resource model.
+
+## Model Cast
+
+Cast the `zone` column to `array` in your Eloquent model so that Laravel automatically handles JSON encoding and decoding on read/write:
+
+```php
+protected $casts = [
+    'zone' => 'array',
+];
+```
+
+When `zone` is cast to `array`, Eloquent returns the column value as a PHP array. `DrawableMap` is aware of this and handles the encoding boundary through two lifecycle hooks:
+
+- **`callAfterStateHydrated()`** — when the form is loaded, if the state is already a string (e.g. raw JSON from a non-cast column), the component JSON-decodes it into an array before passing it to the Alpine component.
+- **`getStateToDehydrate()`** — before the state is written back to the model, if the state has become a JSON string (from `getState()` encoding it for Alpine), the component JSON-decodes it again so Eloquent receives a plain array and applies its own cast correctly.
+
+## How Serialization Works
+
+The serialization lifecycle has three stages:
+
+<Steps>
+  <Step title="State sent to Alpine (getState)">
+    `DrawableMap::getState()` checks whether the current state is an array. If it is, the method JSON-encodes it to a string so the value can be embedded safely in the Alpine `x-data` attribute as `state`.
+  </Step>
+  <Step title="State loaded from model (callAfterStateHydrated)">
+    After Filament hydrates the field from the model record, `callAfterStateHydrated()` checks whether the state is a string. If so, it JSON-decodes it back to an array and calls `$this->state($decoded)` so the component holds a clean PHP array internally.
+  </Step>
+  <Step title="State written back to model (getStateToDehydrate)">
+    When the form is submitted, `getStateToDehydrate()` intercepts the state array before it is written to the model. If the value is a JSON string at that point, it is decoded back to an array so that Eloquent's `array` cast receives the correct type and stores valid JSON in the database column.
+  </Step>
+</Steps>
+
+This round-trip ensures the polygon is always stored as a proper JSON array in the database, regardless of whether the column cast is `array` or `json`.
+
+## Reading Data Back
+
+Once a zone has been saved you can work with it as an ordinary PHP array:
+
+```php
+$zone = $record->zone; // array of ['lat' => ..., 'lng' => ...]
+
+// Calculate bounding box
+$lats = array_column($zone, 'lat');
+$lngs = array_column($zone, 'lng');
+$bounds = [
+    'minLat' => min($lats), 'maxLat' => max($lats),
+    'minLng' => min($lngs), 'maxLng' => max($lngs),
+];
+```
+
+Each element is an associative array with `'lat'` and `'lng'` keys. Standard PHP array functions — `array_column`, `array_map`, `array_filter`, and so on — work directly against this structure.
+
+<Tip>
+  To display a saved zone inside a `ViewableMap` field, pass the stored array directly to the `polygons()` method. `ViewableMap` accepts a nested array, so wrap the single zone in an outer array to satisfy the multi-polygon signature:
+
+  ```php
+  use DiegoBas\FilamentDrawableMap\Forms\Components\ViewableMap;
+
+  ViewableMap::make('zone')
+      ->polygons(fn ($record) => $record->zone ? [$record->zone] : []),
+  ```
+
+  If you are displaying several zones at once, pass each one as a separate element of the outer array and pair it with a matching entry in `titles()` and `colors()` for labels and per-polygon colouring.
+</Tip>

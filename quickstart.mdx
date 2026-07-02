@@ -1,47 +1,84 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Filament Drawable Map in Minutes"
+sidebarTitle: "Quickstart"
+description: "Add an interactive polygon drawing field to a Filament form in three steps. This guide walks you from installation to a working DrawableMap field."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+This guide walks you through adding an interactive polygon drawing field to a Filament resource from scratch. By the end you will have a `DrawableMap` field that lets users draw a geographic zone on a Google Map, persists the coordinates as JSON, and displays the saved polygon in a read-only `ViewableMap` on the detail page.
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Install and configure the package">
+    Follow the [Installation guide](/installation) to require the package, publish the config file, and add your `GOOGLE_MAPS_API_KEY` to `.env`. Once that is done, return here to wire up the form fields.
+  </Step>
+
+  <Step title="Add DrawableMap to a Filament resource form">
+    Import `DrawableMap` and add it to your resource's `form()` method. Use `location()` to set the initial map center, `zoom()` to control the starting zoom level, and `color()` to style the drawn polygon:
+
+    ```php
+    use DiegoBas\FilamentDrawableMap\Forms\Components\DrawableMap;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                DrawableMap::make('zone')
+                    ->label('Service Zone')
+                    ->location(['latitude' => 40.4168, 'longitude' => -3.7038])
+                    ->zoom(12)
+                    ->color('#4285F4'),
+            ]);
+    }
+    ```
+
+    The `location()` method accepts an array with `latitude` and `longitude` keys and overrides the global default set in `config/filament-drawable-map.php`. The `color()` method accepts any valid CSS hex color string and applies it to the polygon stroke and fill.
+  </Step>
+
+  <Step title="Add a JSON column to your database migration">
+    `DrawableMap` serializes the polygon as a JSON array of `{lat, lng}` coordinate objects (for example `[{"lat": 40.42, "lng": -3.70}, ...]`). Add a nullable JSON column to your table migration to store it:
+
+    ```php
+    $table->json('zone')->nullable();
+    ```
+
+    Run your migration after adding the column:
 
     ```bash
-    npm install your-package
+    php artisan migrate
+    ```
+
+    Make sure the `zone` attribute is cast to `array` (or left as a JSON string) in your Eloquent model so that Filament can hydrate and dehydrate the value correctly:
+
+    ```php
+    protected $casts = [
+        'zone' => 'array',
+    ];
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Display the polygon with ViewableMap">
+    On your resource's view or detail page, swap in `ViewableMap` to render the stored polygon as a read-only map. It accepts the same `color()` method so the display polygon matches the one drawn during creation:
 
-    ```bash
-    your-cli start
+    ```php
+    use DiegoBas\FilamentDrawableMap\Forms\Components\ViewableMap;
+
+    ViewableMap::make('zone')
+        ->label('Service Zone')
+        ->color('#4285F4'),
     ```
+
+    `ViewableMap` automatically reads the field value from the record, decodes the JSON, and renders the polygon on a non-interactive Google Map embed.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## How to Interact with DrawableMap
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+Once the field is rendered in your Filament form, here is how to use the interactive map to define a polygon zone:
+
+- **Add a vertex** — `Ctrl + Click` (or `Cmd + Click` on macOS) anywhere on the map to place a new polygon vertex at that point.
+- **Remove a vertex** — Double-click an existing vertex on the polygon to delete it.
+- **Reset the polygon** — Click the **Clear** button below the map to remove all vertices and start over. You can customize the button label with `->clearButtonLabel('Reset')`.
+- **Navigate to the polygon** — Click anywhere inside a drawn polygon to pan and zoom the map so the full polygon is visible.
+
+<Tip>
+  For the full list of available methods on both `DrawableMap` and `ViewableMap` — including `polygons()`, `titles()`, `mode()`, and `clearButtonLabel()` — see the [DrawableMap component reference](/components/drawable-map).
 </Tip>

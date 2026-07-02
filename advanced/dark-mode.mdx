@@ -1,0 +1,82 @@
+---
+title: "Dark Mode Support in Filament Drawable Map"
+sidebarTitle: "Dark Mode"
+description: "Filament Drawable Map auto-detects Filament dark mode and applies matching Google Maps styles. Learn how theme detection works and how to set modes manually."
+---
+
+Both `DrawableMap` and `ViewableMap` automatically detect whether the Filament panel is displaying in light or dark mode and apply a matching Google Maps colour scheme. No additional configuration is required — the feature works out of the box, and the map updates in real time when the user toggles the theme.
+
+## How It Works
+
+Theme detection follows a layered approach so the map is always styled consistently with the surrounding panel UI.
+
+**Initial detection on `init`**
+
+When `DrawableMap` initialises its Alpine component, it reads the active theme in this order:
+
+1. `localStorage.getItem('theme')` — the value Filament writes when the user explicitly chooses a theme.
+2. The CSS custom property `--default-theme-mode` on `document.documentElement` — the value Filament sets when a panel-level default theme is configured.
+
+The resolved value (`'light'` or `'dark'`) is stored as `this.theme` and passed to `applyMode(map, mode)` immediately after the Google Maps instance is created.
+
+**Responding to theme changes in `DrawableMap`**
+
+`DrawableMap` attaches a `theme-changed` event listener on `window`. Filament dispatches this native browser event when the user clicks the dark-mode toggle, passing the new mode string as `event.detail`. When received, the component updates `this.theme` and calls `applyMode(map, mode)` on the live map instance.
+
+```js
+window.addEventListener('theme-changed', (event) => {
+    this.theme = event.detail
+    this.applyMode(map, this.theme)
+})
+```
+
+**Responding to theme changes in `ViewableMap`**
+
+`ViewableMap` is an Alpine/Livewire component rendered in a Blade template. It listens for the `dark-mode-toggled` event dispatched by Filament's Alpine integration:
+
+```html
+x-on:dark-mode-toggled.window="toggleMode"
+```
+
+When this event fires, `toggleMode()` flips `this.mode` between `'dark'` and `'light'` and calls `this.applyMode()` on the component's stored `this.map` reference.
+
+## Dark Map Style
+
+When mode is `'dark'`, `applyMode` applies a full Google Maps style override built from the [Google Maps Styling Wizard](https://mapstyle.withgoogle.com/) dark preset. The override adjusts:
+
+- **Geometry** — base tile colour changed to a deep navy (`#242f3e`)
+- **Road labels** — muted fill (`#9ca5b3`) with dark stroke
+- **Highways** — warm tan geometry (`#746855`) with golden label fill (`#f3d19c`)
+- **POI & locality labels** — amber fill (`#d59563`) on dark geometry
+- **Parks** — dark teal geometry (`#263c3f`) with muted green labels
+- **Transit** — dark slate geometry (`#2f3948`) with amber station labels
+- **Water** — deep navy geometry (`#17263c`) with muted text
+
+When mode is `'light'`, `applyMode` clears all custom styles by passing an empty array `[]` to `map.setOptions({ styles: [] })`, restoring the default Google Maps appearance.
+
+## Manual Override
+
+By default both components read the active theme at initialisation time. If you need a specific field to always render in a fixed mode — regardless of the panel theme — pass the desired mode at field definition time.
+
+```php
+// Force dark mode on the DrawableMap field
+DrawableMap::make('zone')
+    ->setMode('dark'),
+
+// Force light mode on the ViewableMap field
+ViewableMap::make('zone')
+    ->mode('light'),
+```
+
+The PHP value is embedded in the Alpine component's `x-data` as the initial `mode`, bypassing the `localStorage` / CSS-variable detection that runs during `init`.
+
+## Available Modes
+
+| Mode | Description |
+|------|-------------|
+| `'light'` | Standard Google Maps styling — the default appearance with no custom style overrides applied. |
+| `'dark'` | Full custom dark style matching Filament's dark theme — adjusts geometry, road, POI, transit, and water colours to a dark palette. |
+
+<Note>
+  Both components default to auto-detecting the current theme on component initialisation, so explicit `setMode()` / `mode()` calls are only needed when you want to lock a field to a specific appearance regardless of the user's chosen panel theme.
+</Note>

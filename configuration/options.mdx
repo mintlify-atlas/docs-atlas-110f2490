@@ -1,0 +1,68 @@
+---
+title: "Global Configuration Options for Filament Drawable Map"
+sidebarTitle: "Config Options"
+description: "Reference for all filament-drawable-map configuration keys, including the Google Maps API key and the default map center coordinates."
+---
+
+After publishing the configuration file, you can set global defaults that apply to every map field across your Filament application. These defaults are used as the fallback values when no per-field overrides are provided, letting you centralise your map setup in one place rather than repeating coordinates or credentials on every field definition.
+
+## Publishing the config
+
+Run the following Artisan command to copy the package configuration file into your application's `config/` directory:
+
+```bash
+php artisan vendor:publish --tag="filament-drawable-map-config"
+```
+
+This creates `config/filament-drawable-map.php` with the following contents:
+
+```php
+// config/filament-drawable-map.php
+return [
+    'providers' => [
+        'google' => [
+            'key' => env('GOOGLE_MAPS_API_KEY', null),
+        ],
+    ],
+    'location' => [
+        'latitude'  => 39.500676,
+        'longitude' => -0.439357,
+    ],
+];
+```
+
+## Config key reference
+
+<ParamField path="providers.google.key" type="string|null" default="null">
+  Your Google Maps JavaScript API key. The package reads this value from the `GOOGLE_MAPS_API_KEY` environment variable by default. It is injected into Filament's shared JavaScript data bag via `FilamentAsset::registerScriptData()` and is also referenced directly in the `ViewableMap` Blade template when constructing the Google Maps script URL. Set this to `null` (or leave the env var unset) to disable map rendering.
+</ParamField>
+
+<ParamField path="location.latitude" type="float" default="39.500676">
+  The default map center latitude in decimal degrees. This value is used by `ViewableMap` as the initial map center when the field is rendered. When one or more polygons are present, the map automatically fits and pans to their combined bounds instead of using this fallback.
+</ParamField>
+
+<ParamField path="location.longitude" type="float" default="-0.439357">
+  The default map center longitude in decimal degrees. Works in tandem with `location.latitude` as the fallback center point for `ViewableMap` fields. When polygons are present, the map auto-fits to their bounds and this value is not used.
+</ParamField>
+
+## Per-field overrides
+
+The global `location` defaults can be overridden on individual `DrawableMap` fields using the fluent `->location()` and `->zoom()` methods provided by the `InteractsWithMap` trait.
+
+```php
+use DiegoBas\FilamentDrawableMap\Forms\Components\DrawableMap;
+
+DrawableMap::make('delivery_zone')
+    ->location([
+        'latitude'  => 40.712776,
+        'longitude' => -74.005974,
+    ])
+    ->zoom(12)
+    ->label('Delivery Zone'),
+```
+
+`ViewableMap` reads the center coordinates directly from the published config and does not expose a `->location()` override. Instead, it automatically fits the viewport to the bounds of all rendered polygons whenever polygon data is available, so an explicit center is rarely needed.
+
+<Note>
+  Per-field `->location()` and `->zoom()` calls on `DrawableMap` always take precedence over the global config defaults. The global values in `config/filament-drawable-map.php` only apply when no per-field override is provided.
+</Note>

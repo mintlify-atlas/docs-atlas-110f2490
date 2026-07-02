@@ -1,0 +1,110 @@
+---
+title: "Localization and Translation in Filament Drawable Map"
+sidebarTitle: "Localization"
+description: "Filament Drawable Map ships with English and Spanish translations. Learn how to publish translations and add support for additional languages."
+---
+
+Filament Drawable Map uses Laravel's standard translation system. The package ships with translation files for two languages, and adding support for additional locales is a matter of creating a single PHP file under your application's `lang/vendor/` directory.
+
+## Bundled Languages
+
+The following languages are included with the package out of the box:
+
+- **English** (`en`)
+- **Spanish** (`es`)
+
+## Translation Keys
+
+The translation file contains two keys used by the `DrawableMap` component's built-in clear button:
+
+```php
+// lang/en/filament-drawable-map.php
+return [
+    'clear_zone' => 'Clear zone',
+    'clear_zone_description' => 'Click to clear the zone',
+];
+```
+
+The `clear_zone` key provides the button label that appears on the map control. The `clear_zone_description` key provides the button's `title` tooltip text.
+
+The Spanish equivalents ship as:
+
+```php
+// lang/es/filament-drawable-map.php
+return [
+    'clear_zone' => 'Borrar zona',
+    'clear_zone_description' => 'Pulse para eliminar la zona',
+];
+```
+
+## Publishing Translations
+
+To customise the bundled translations or add new languages, first publish the translation files to your application:
+
+```bash
+php artisan vendor:publish --tag="filament-drawable-map-translations"
+```
+
+This copies the package's `resources/lang/` directory into your application at:
+
+```text
+lang/
+  vendor/
+    filament-drawable-map/
+      en/
+        filament-drawable-map.php
+      es/
+        filament-drawable-map.php
+```
+
+Once published, you can edit the existing files or add new language directories alongside them. Laravel will load your vendor overrides in preference to the package originals.
+
+## Adding a New Language
+
+Create a new locale directory under the published vendor path and add a `filament-drawable-map.php` file containing translations for all keys:
+
+```text
+lang/
+  vendor/
+    filament-drawable-map/
+      fr/
+        filament-drawable-map.php   <-- create this file
+```
+
+A complete French translation file looks like this:
+
+```php
+<?php
+
+return [
+    'clear_zone' => 'Effacer la zone',
+    'clear_zone_description' => 'Cliquez pour effacer la zone',
+];
+```
+
+Laravel automatically discovers the file when `App::getLocale()` returns `'fr'`, so no additional registration is required.
+
+## Clear Button Label at the Field Level
+
+The `clearButtonLabel()` method on `DrawableMap` lets you override the translated string for a specific field instance without changing the translation files. This is useful when different resources use different terminology for their zones.
+
+```php
+DrawableMap::make('zone')
+    ->clearButtonLabel(__('filament-drawable-map::filament-drawable-map.clear_zone')),
+```
+
+Passing the translation helper `__()` with the full namespaced key means the label will still respect the active locale while allowing you to swap in an alternative key or hardcode a string for one-off cases.
+
+## Map Language
+
+`ViewableMap` passes `App::getLocale()` to the Google Maps JavaScript API URL as the `language` query parameter when it loads the Maps script:
+
+```text
+https://maps.googleapis.com/maps/api/js?key=...&language=fr&...
+```
+
+This instructs Google Maps to render all map labels — road names, place names, POI names, and administrative labels — in the application's current locale automatically.
+
+<Info>
+  `DrawableMap` loads the Google Maps API through the `@googlemaps/js-api-loader` npm package and does not pass a `language` parameter. Map labels in `DrawableMap` will follow the browser's or Google's default language. Only `ViewableMap` applies the application locale to the map tile labels.
+</Info>

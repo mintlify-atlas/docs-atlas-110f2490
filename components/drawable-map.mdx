@@ -1,0 +1,141 @@
+---
+title: "DrawableMap: Interactive Polygon Drawing Field for Filament"
+sidebarTitle: "DrawableMap"
+description: "The DrawableMap field lets users draw polygon zones on an interactive Google Map using Ctrl+Click to add vertices and double-click to remove them."
+---
+
+The `DrawableMap` field embeds an interactive Google Maps canvas directly inside a Filament form, giving users a way to define geographic polygon zones by clicking on the map. Vertex coordinates are automatically serialised to JSON and stored as a `json` database column, making the field a self-contained solution for delivery-zone, coverage-area, and geo-fencing use cases.
+
+## Basic Usage
+
+```php
+use DiegoBas\FilamentDrawableMap\Forms\Components\DrawableMap;
+
+DrawableMap::make('zone')
+    ->label('Delivery Zone')
+    ->location(['latitude' => 40.4168, 'longitude' => -3.7038])
+    ->zoom(12)
+    ->color('#4285F4'),
+```
+
+## Interaction
+
+The map supports a keyboard-driven drawing mode so that normal map panning and polygon editing never conflict with each other.
+
+<Steps>
+  <Step title="Enter drawing mode">
+    Hold the **Ctrl** key. The cursor changes to a crosshair and the polygon becomes editable.
+  </Step>
+  <Step title="Add a vertex">
+    While holding **Ctrl**, click any point on the map to append a new vertex to the polygon. The polygon is drawn to the map automatically after the first vertex is placed.
+  </Step>
+  <Step title="Remove a vertex">
+    While holding **Ctrl**, double-click an existing vertex to delete it from the polygon path.
+  </Step>
+  <Step title="Exit drawing mode">
+    Release the **Ctrl** key. The cursor returns to the default pointer and the map resumes normal pan/zoom gesture handling.
+  </Step>
+  <Step title="Zoom to polygon">
+    Click anywhere on the polygon (without holding Ctrl) to fit and pan the map to the polygon's bounding box.
+  </Step>
+  <Step title="Clear the polygon">
+    Click the **Clear** button that appears at the top-centre of the map to remove the entire polygon and reset the field value to `null`.
+  </Step>
+</Steps>
+
+## Method Reference
+
+<ParamField path="make" type="string" required>
+  The field name that maps to the model attribute or Livewire state key. Must be unique within the form schema.
+</ParamField>
+
+<ParamField path="label" type="string">
+  The human-readable label displayed above the map in the form layout.
+</ParamField>
+
+<ParamField path="location" type="array">
+  Sets the initial map centre before any polygon exists. The array must contain exactly two keys: `latitude` and `longitude`. Any extra keys are silently discarded.
+
+  Defaults to `['latitude' => 0, 'longitude' => 0]`.
+
+  ```php
+  ->location(['latitude' => 40.4168, 'longitude' => -3.7038])
+  ```
+</ParamField>
+
+<ParamField path="zoom" type="int">
+  The Google Maps zoom level used when the map first renders and no saved polygon is present. When a polygon already exists in state, the map auto-fits to its bounds instead.
+
+  Default: `13`.
+</ParamField>
+
+<ParamField path="color" type="string | Closure | null">
+  A hex colour string applied to both the polygon stroke and its semi-transparent fill. Accepts a plain string or a `Closure` that returns a string.
+
+  Default: `'#FF0000'`.
+
+  ```php
+  ->color('#4285F4')
+  // or dynamically:
+  ->color(fn () => auth()->user()->brand_color)
+  ```
+</ParamField>
+
+<ParamField path="setMode" type="string">
+  Overrides the map colour scheme. Accepted values are `'light'` and `'dark'`. When not called, the component reads the `--default-theme-mode` CSS custom property and falls back to `localStorage.theme`, so it normally tracks the active Filament theme automatically.
+</ParamField>
+
+<ParamField path="clearButtonLabel" type="string">
+  The text label of the Clear button rendered at the top-centre of the map.
+
+  Default: `'Clear'`.
+
+  ```php
+  ->clearButtonLabel(__('Remove polygon'))
+  ```
+</ParamField>
+
+<ParamField path="disabled" type="bool | Closure">
+  When `true`, all map interaction — Ctrl+click drawing, vertex removal, polygon clicks, and the Clear button — is suppressed. The map is still rendered and the existing polygon is still displayed. Accepts a `Closure` for conditional disabling.
+</ParamField>
+
+## State Format
+
+The field stores and returns polygon coordinates as a JSON array of objects, each with a `lat` and `lng` key. Internally the component encodes/decodes this automatically on hydration and dehydration, so your model only ever sees a PHP array or a JSON string.
+
+```json
+[
+  {"lat": 40.4168, "lng": -3.7038},
+  {"lat": 40.4200, "lng": -3.7000},
+  {"lat": 40.4100, "lng": -3.6950}
+]
+```
+
+The corresponding Eloquent migration column should be cast to `json`:
+
+```php
+$table->json('zone')->nullable();
+```
+
+And in your model:
+
+```php
+protected $casts = [
+    'zone' => 'array',
+];
+```
+
+## Disabled State
+
+Pass a boolean or a `Closure` to `disabled()` to make the field read-only at runtime.
+
+```php
+DrawableMap::make('zone')
+    ->disabled(fn () => !auth()->user()->can('edit-zones')),
+```
+
+When disabled, `gestureHandling` is set to `'none'` and clickable icons are turned off at the Google Maps SDK level, so the map tile still loads but accepts no input.
+
+<Note>
+  The map canvas is fixed at **400 px tall** by the component's built-in inline style. This height cannot be changed through the PHP API — override it in your application's stylesheet if a different height is required.
+</Note>

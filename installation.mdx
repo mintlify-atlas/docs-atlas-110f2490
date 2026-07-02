@@ -1,0 +1,86 @@
+---
+title: "Install Filament Drawable Map via Composer"
+sidebarTitle: "Installation"
+description: "Install the diegobas/filament-drawable-map Composer package, publish the config file, and configure your Google Maps API key to get started."
+---
+
+Getting Filament Drawable Map running in your project takes only a few minutes. You will install the package via Composer, publish the configuration file, and supply your Google Maps API key through an environment variable. Optional steps let you publish the Blade views for customization and run any bundled database migrations.
+
+<Steps>
+  <Step title="Require the package">
+    Add the package to your Laravel project using Composer:
+
+    ```bash
+    composer require diegobas/filament-drawable-map
+    ```
+  </Step>
+
+  <Step title="Publish the config file">
+    Publish the package configuration file so you can customize the default map location and API key settings:
+
+    ```bash
+    php artisan vendor:publish --tag="filament-drawable-map-config"
+    ```
+
+    This creates `config/filament-drawable-map.php` in your application.
+  </Step>
+
+  <Step title="Set your Google Maps API key">
+    Add your Google Maps API key to your `.env` file. The Maps JavaScript API must be enabled for the key in the [Google Cloud Console](https://console.cloud.google.com/):
+
+    ```bash
+    GOOGLE_MAPS_API_KEY=your_key_here
+    ```
+  </Step>
+
+  <Step title="(Optional) Publish the Blade views">
+    If you need to customize the map field templates, publish the package views to your `resources/views/vendor` directory:
+
+    ```bash
+    php artisan vendor:publish --tag="filament-drawable-map-views"
+    ```
+  </Step>
+
+  <Step title="(Optional) Publish and run migrations">
+    If the package ships migrations for your version, publish and run them:
+
+    ```bash
+    php artisan vendor:publish --tag="filament-drawable-map-migrations"
+    php artisan migrate
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  The `FilamentDrawableMapServiceProvider` is registered automatically via Laravel's package auto-discovery. You do **not** need to add it to `config/app.php` or call `->plugin()` on your Filament panel.
+</Note>
+
+## Configuration File
+
+After publishing, `config/filament-drawable-map.php` will contain the following defaults. Set `GOOGLE_MAPS_API_KEY` in your environment rather than hardcoding it here, and adjust the default `location` coordinates to a sensible center point for your application's geography:
+
+```php
+// config/filament-drawable-map.php
+return [
+    'providers' => [
+        'google' => [
+            'key' => env('GOOGLE_MAPS_API_KEY', null),
+        ],
+    ],
+    'location' => [
+        'latitude' => 39.500676,
+        'longitude' => -0.439357,
+    ],
+];
+```
+
+The `location` values are used as the initial map center when no per-field `location()` override is provided.
+
+## Dependencies
+
+| Dependency | Required Version |
+|---|---|
+| `php` | `^8.0` |
+| `filament/filament` | `^3.0` |
+| `spatie/laravel-package-tools` | `^1.16` |
+| `illuminate/contracts` | `^9.0 \| ^10.0 \| ^11.0` |
