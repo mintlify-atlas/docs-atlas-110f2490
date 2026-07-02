@@ -69,8 +69,8 @@ The map supports a keyboard-driven drawing mode so that normal map panning and p
   Default: `13`.
 </ParamField>
 
-<ParamField path="color" type="string | Closure | null">
-  A hex colour string applied to both the polygon stroke and its semi-transparent fill. Accepts a plain string or a `Closure` that returns a string.
+<ParamField path="color" type="string | array | Closure | null">
+  A hex colour string applied to both the polygon stroke and its semi-transparent fill. Accepts a plain string, an array, or a `Closure` that returns a string.
 
   Default: `'#FF0000'`.
 
@@ -98,6 +98,10 @@ The map supports a keyboard-driven drawing mode so that normal map panning and p
 <ParamField path="disabled" type="bool | Closure">
   When `true`, all map interaction — Ctrl+click drawing, vertex removal, polygon clicks, and the Clear button — is suppressed. The map is still rendered and the existing polygon is still displayed. Accepts a `Closure` for conditional disabling.
 </ParamField>
+
+<Note>
+  `getMode()`, `getState()`, `callAfterStateHydrated()`, and `getStateToDehydrate()` are internal lifecycle methods used by the Filament framework during form hydration and dehydration. You do not call these directly in your form schema.
+</Note>
 
 ## State Format
 

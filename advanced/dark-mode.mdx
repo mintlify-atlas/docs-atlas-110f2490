@@ -1,7 +1,7 @@
 ---
-title: "Dark Mode Support in Filament Drawable Map"
+title: "Dark Mode Support for Filament Drawable Map Components"
 sidebarTitle: "Dark Mode"
-description: "Filament Drawable Map auto-detects Filament dark mode and applies matching Google Maps styles. Learn how theme detection works and how to set modes manually."
+description: "Filament Drawable Map auto-detects Filament dark mode and applies matching Google Maps styles. Learn how theme detection works and how to override modes."
 ---
 
 Both `DrawableMap` and `ViewableMap` automatically detect whether the Filament panel is displaying in light or dark mode and apply a matching Google Maps colour scheme. No additional configuration is required — the feature works out of the box, and the map updates in real time when the user toggles the theme.
@@ -56,19 +56,19 @@ When mode is `'light'`, `applyMode` clears all custom styles by passing an empty
 
 ## Manual Override
 
-By default both components read the active theme at initialisation time. If you need a specific field to always render in a fixed mode — regardless of the panel theme — pass the desired mode at field definition time.
+`ViewableMap` supports locking a field to a fixed mode regardless of the panel theme. The `mode()` method sets the initial `mode` value that is embedded directly in the Alpine component's `x-data`, so the map renders in the specified mode from the first paint.
 
 ```php
-// Force dark mode on the DrawableMap field
-DrawableMap::make('zone')
-    ->setMode('dark'),
+// Force dark mode on a ViewableMap field
+ViewableMap::make('zone')
+    ->mode('dark'),
 
-// Force light mode on the ViewableMap field
+// Force light mode on a ViewableMap field
 ViewableMap::make('zone')
     ->mode('light'),
 ```
 
-The PHP value is embedded in the Alpine component's `x-data` as the initial `mode`, bypassing the `localStorage` / CSS-variable detection that runs during `init`.
+`DrawableMap` exposes a `setMode()` method on its PHP class, but that value is not wired to the Alpine component — the JS `init` function always resolves the starting theme from `localStorage` and `--default-theme-mode` and then tracks changes via the `theme-changed` window event. Use the panel's built-in dark mode controls to influence `DrawableMap`'s theme at runtime.
 
 ## Available Modes
 
@@ -78,5 +78,5 @@ The PHP value is embedded in the Alpine component's `x-data` as the initial `mod
 | `'dark'` | Full custom dark style matching Filament's dark theme — adjusts geometry, road, POI, transit, and water colours to a dark palette. |
 
 <Note>
-  Both components default to auto-detecting the current theme on component initialisation, so explicit `setMode()` / `mode()` calls are only needed when you want to lock a field to a specific appearance regardless of the user's chosen panel theme.
+  `ViewableMap` supports a fixed-mode override via `->mode()` at field definition time. `DrawableMap` always derives its theme from the active Filament panel theme via `localStorage` and the `theme-changed` event — it does not support a PHP-level mode lock.
 </Note>

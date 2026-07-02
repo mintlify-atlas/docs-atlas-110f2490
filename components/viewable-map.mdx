@@ -35,7 +35,7 @@ ViewableMap::make('zones_display')
     ->color('#4285F4'),
 ```
 
-The map auto-fits its viewport to show all supplied polygons on first render. Each polygon is drawn using the colour resolved from `color()`. Per-polygon colour overrides are applied through the Alpine `colors` state array, which is populated from the data returned by `polygons()` at the time the component initialises.
+The map auto-fits its viewport to show all supplied polygons on first render. Each polygon is drawn using the colour resolved from `color()`. The initial map centre is taken from the package's published config (`filament-drawable-map.location.latitude` / `filament-drawable-map.location.longitude`) — `ViewableMap` does not expose a `location()` setter.
 
 ## Method Reference
 
@@ -65,7 +65,7 @@ The map auto-fits its viewport to show all supplied polygons on first render. Ea
 </ParamField>
 
 <ParamField path="color" type="string | Closure | null">
-  A hex colour string applied to the polygon stroke and semi-transparent fill. In multi-polygon mode this serves as the fallback colour for any polygon whose index has no entry in the resolved `colors` array.
+  A hex colour string applied to the polygon stroke and semi-transparent fill. In multi-polygon mode this serves as the fallback colour for any polygon whose index has no entry in the resolved colours array.
 
   Default: `'#FF0000'`.
 
@@ -85,6 +85,10 @@ The map auto-fits its viewport to show all supplied polygons on first render. Ea
 <ParamField path="disabled" type="bool | Closure">
   When `true`, gesture handling is set to `'none'` and map icon clicks are disabled at the Google Maps SDK level. The polygons remain visible but the map cannot be panned or zoomed by the user.
 </ParamField>
+
+<Note>
+  `getTitles()`, `getColor()`, `getMode()`, `getPolygons()`, `getState()`, and `callAfterStateHydrated()` are internal lifecycle and accessor methods used by the Filament framework and the Blade template. You do not call these directly in your form schema.
+</Note>
 
 ## Interaction
 
@@ -133,3 +137,7 @@ protected $casts = [
 <Info>
   When `polygons()` is provided, the field's own state value (the model attribute bound to `make()`) is completely ignored. All coordinate data is taken exclusively from the array returned by your `polygons()` closure. You can therefore pass any field name to `make()` — it only serves as a unique identifier within the Filament form schema.
 </Info>
+
+<Note>
+  The map canvas is fixed at **400 px tall** by the component's built-in inline style. This height cannot be changed through the PHP API — override it in your application's stylesheet if a different height is required.
+</Note>

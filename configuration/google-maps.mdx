@@ -41,21 +41,31 @@ Filament Drawable Map uses the Google Maps JavaScript API to render interactive 
 
 ## How the key is loaded
 
-The package service provider calls `FilamentAsset::registerScriptData()` during the `packageBooted` phase. This injects the API key into Filament's shared JavaScript data bag, making it available to the Alpine.js map component as `window.filamentData.api.key` at runtime.
+The package service provider's `packageBooted` method makes two separate `FilamentAsset` calls. First, it calls `FilamentAsset::registerScriptData()` to inject the API key and default location into Filament's shared JavaScript data bag, making them available to the Alpine.js `DrawableMap` component as `window.filamentData.api.key` at runtime. Second, it calls `FilamentAsset::register()` to register the compiled Alpine component (`filament-drawable-map-component`) and its accompanying CSS (`filament-drawable-map-styles`) as named Filament assets.
 
 ```php
+// Injects API key and location into window.filamentData
 FilamentAsset::registerScriptData([
     'api' => [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
     'location' => [
-        'latitude'  => config('filament-map-plugin.location.latitude'),
+        'latitude' => config('filament-map-plugin.location.latitude'),
         'longitude' => config('filament-map-plugin.location.longitude'),
     ],
 ]);
+
+// Registers the compiled JS component and CSS as Filament assets
+FilamentAsset::register(
+    [
+        AlpineComponent::make('filament-drawable-map-component', __DIR__ . '/../resources/dist/filament-drawable-map.js'),
+        Css::make('filament-drawable-map-styles', __DIR__ . '/../resources/dist/filament-drawable-map.css'),
+    ],
+    'diegobas/filament-drawable-map'
+);
 ```
 
-The `ViewableMap` Blade template also references the key directly via `config('filament-drawable-map.providers.google.key')` when constructing the Google Maps script URL, so the key must be present in the published config or the environment variable must resolve correctly through the config file.
+The `ViewableMap` Blade template takes a different approach: it references the key directly via `config('filament-drawable-map.providers.google.key')` when constructing the Google Maps script URL, so the key must be present in the published config or the environment variable must resolve correctly through the config file. Unlike `DrawableMap`, `ViewableMap` does not use `window.filamentData.api.key`.
 
 <Tip>
   For production deployments, restrict your API key to the specific HTTP referrers (your domain names) in **Google Cloud Console → APIs & Services → Credentials**. This prevents unauthorised use of your key by third parties.

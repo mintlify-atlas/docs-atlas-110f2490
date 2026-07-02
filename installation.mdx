@@ -1,10 +1,10 @@
 ---
-title: "Install Filament Drawable Map via Composer"
+title: "Filament Drawable Map: Installation and Configuration"
 sidebarTitle: "Installation"
 description: "Install the diegobas/filament-drawable-map Composer package, publish the config file, and configure your Google Maps API key to get started."
 ---
 
-Getting Filament Drawable Map running in your project takes only a few minutes. You will install the package via Composer, publish the configuration file, and supply your Google Maps API key through an environment variable. Optional steps let you publish the Blade views for customization and run any bundled database migrations.
+Getting Filament Drawable Map running in your project takes only a few minutes. You will install the package via Composer, publish the configuration file, and supply your Google Maps API key through an environment variable. An optional step lets you publish the Blade views for deeper customization of the map field templates.
 
 <Steps>
   <Step title="Require the package">
@@ -41,18 +41,14 @@ Getting Filament Drawable Map running in your project takes only a few minutes. 
     ```
   </Step>
 
-  <Step title="(Optional) Publish and run migrations">
-    If the package ships migrations for your version, publish and run them:
-
-    ```bash
-    php artisan vendor:publish --tag="filament-drawable-map-migrations"
-    php artisan migrate
-    ```
-  </Step>
 </Steps>
 
 <Note>
   The `FilamentDrawableMapServiceProvider` is registered automatically via Laravel's package auto-discovery. You do **not** need to add it to `config/app.php` or call `->plugin()` on your Filament panel.
+</Note>
+
+<Note>
+  This package does not register publishable migrations. Add the polygon column directly to your own model's migration — typically a nullable JSON column such as `$table->json('zone')->nullable()`. See the [Quickstart](/quickstart) for a complete example.
 </Note>
 
 ## Configuration File

@@ -1,7 +1,7 @@
 ---
-title: "Filament Drawable Map: Google Maps Polygon Fields for Filament"
+title: "Filament Drawable Map: Google Maps Polygon Drawing"
 sidebarTitle: "Introduction"
-description: "Filament Drawable Map adds DrawableMap and ViewableMap fields to Filament v3, enabling interactive polygon drawing and display on Google Maps in your admin panel."
+description: "Filament Drawable Map adds DrawableMap and ViewableMap fields to Filament v3 for interactive polygon drawing and display on Google Maps in Laravel."
 ---
 
 Filament Drawable Map is a FilamentPHP v3 plugin that brings interactive Google Maps polygon fields directly into your Filament admin panel. Built for Laravel developers who need to define, capture, and display geographic zones — such as service areas, delivery regions, or coverage boundaries — it provides two ready-to-use form components that handle all the map rendering and coordinate serialization for you.
@@ -10,7 +10,7 @@ Filament Drawable Map is a FilamentPHP v3 plugin that brings interactive Google 
 
 The package ships two form field components that cover the full create-read-update workflow for polygon data.
 
-**`DrawableMap`** is a fully interactive field that lets users draw a polygon directly on a Google Map. Users click to place vertices, double-click to remove them, and click a **Clear** button to start over. The final polygon is automatically serialized as a JSON array of `{lat, lng}` coordinate objects and stored in your model.
+**`DrawableMap`** is a fully interactive field that lets users draw a polygon directly on a Google Map. Users hold `Ctrl` and click to place vertices, double-click an existing vertex to remove it, and click a **Clear** button at the top of the map to start over. The final polygon is automatically serialized as a JSON array of `{lat, lng}` coordinate objects and stored in your model.
 
 **`ViewableMap`** is a read-only display field that renders one or more stored polygons on a Google Map. It is ideal for detail and view pages where you want to show a zone without allowing edits. It supports multiple polygons via the `polygons()` method and optional title overlays via `titles()`.
 

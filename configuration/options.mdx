@@ -34,7 +34,7 @@ return [
 ## Config key reference
 
 <ParamField path="providers.google.key" type="string|null" default="null">
-  Your Google Maps JavaScript API key. The package reads this value from the `GOOGLE_MAPS_API_KEY` environment variable by default. It is injected into Filament's shared JavaScript data bag via `FilamentAsset::registerScriptData()` and is also referenced directly in the `ViewableMap` Blade template when constructing the Google Maps script URL. Set this to `null` (or leave the env var unset) to disable map rendering.
+  Your Google Maps JavaScript API key, read from the `GOOGLE_MAPS_API_KEY` environment variable by default. The `ViewableMap` Blade template reads this config value directly via `config('filament-drawable-map.providers.google.key')` when constructing the Google Maps script URL. The `DrawableMap` Alpine component receives the key through `window.filamentData.api.key`, which the service provider populates by calling `FilamentAsset::registerScriptData()` with `env('GOOGLE_MAPS_API_KEY')` directly. Set this to `null` (or leave the env var unset) to disable map rendering.
 </ParamField>
 
 <ParamField path="location.latitude" type="float" default="39.500676">

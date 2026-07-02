@@ -76,9 +76,9 @@ Once the field is rendered in your Filament form, here is how to use the interac
 
 - **Add a vertex** — `Ctrl + Click` (or `Cmd + Click` on macOS) anywhere on the map to place a new polygon vertex at that point.
 - **Remove a vertex** — Double-click an existing vertex on the polygon to delete it.
-- **Reset the polygon** — Click the **Clear** button below the map to remove all vertices and start over. You can customize the button label with `->clearButtonLabel('Reset')`.
+- **Reset the polygon** — Click the **Clear** button at the top center of the map to remove all vertices and start over. You can customize the button label with `->clearButtonLabel('Reset')`.
 - **Navigate to the polygon** — Click anywhere inside a drawn polygon to pan and zoom the map so the full polygon is visible.
 
 <Tip>
-  For the full list of available methods on both `DrawableMap` and `ViewableMap` — including `polygons()`, `titles()`, `mode()`, and `clearButtonLabel()` — see the [DrawableMap component reference](/components/drawable-map).
+  For the full list of available methods — including `ViewableMap`'s `polygons()`, `titles()`, and `mode()`, as well as `DrawableMap`'s `setMode()` and `clearButtonLabel()` — refer to the component source files under `src/Forms/Components/`.
 </Tip>

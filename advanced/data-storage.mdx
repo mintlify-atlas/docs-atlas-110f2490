@@ -1,7 +1,7 @@
 ---
 title: "How Filament Drawable Map Stores Polygon Coordinates"
 sidebarTitle: "Data Storage"
-description: "Understand the JSON coordinate format used by DrawableMap, how to set up your database column, and how to work with the stored polygon data in your Laravel models."
+description: "Learn how DrawableMap stores polygon coordinates as a JSON array of lat/lng objects, how to set up your database column, and how serialization works."
 ---
 
 `DrawableMap` represents polygon zones as a flat array of latitude/longitude pairs. Understanding how coordinates flow between the map component, your Eloquent model, and the database will help you set up migrations correctly, avoid double-encoding bugs, and query or transform zone data with confidence.
